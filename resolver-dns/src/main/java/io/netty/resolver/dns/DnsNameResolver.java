@@ -501,11 +501,23 @@ public class DnsNameResolver extends InetNameResolver {
             }
         });
 
+        // CN-31752: BEGIN revert https://github.com/netty/netty/pull/13817
+        final ChannelFuture future;
         if (localAddress == null) {
-            localAddress = new InetSocketAddress(0);
+            b.option(ChannelOption.DATAGRAM_CHANNEL_ACTIVE_ON_REGISTRATION, true);
+            future = b.register();
+        } else {
+            future = b.bind(localAddress);
         }
+        /*
+         *  if (localAddress == null) {
+         *    localAddress = new InetSocketAddress(0);
+         *  }
+         *
+         *  ChannelFuture future = b.bind(localAddress);
+         */
+        // CN-31752 : END
 
-        ChannelFuture future = b.bind(localAddress);
         if (future.isDone()) {
             Throwable cause = future.cause();
             if (cause != null) {
